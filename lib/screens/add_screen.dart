@@ -1,11 +1,13 @@
 import 'package:admin/constants.dart';
+import 'package:admin/screens/dashboard/model/portfolio_model.dart';
 import 'package:admin/screens/dashboard/view_model/cubit.dart';
 import 'package:admin/screens/dashboard/view_model/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class AddScreen extends StatefulWidget {
-  const AddScreen({Key? key}) : super(key: key);
+  const AddScreen({Key? key, required this.data}) : super(key: key);
+  final Data? data;
 
   @override
   _AddScreenState createState() => _AddScreenState();
@@ -21,6 +23,9 @@ class _AddScreenState extends State<AddScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.data != null) {
+      PortofolioCubit.get(context).init(widget.data!);
+    }
     return Scaffold(
       appBar: AppBar(
         title: const Text('Add Item'),
@@ -52,6 +57,7 @@ class _AddScreenState extends State<AddScreen> {
                   children: [
                     // حقل العنوان
                     TextField(
+                      enabled: widget.data == null,
                       decoration: const InputDecoration(labelText: 'Title'),
                       controller: cubit.title,
                     ),
@@ -59,6 +65,7 @@ class _AddScreenState extends State<AddScreen> {
 
                     // حقل الوصف
                     TextField(
+                      enabled: widget.data == null,
                       decoration:
                           const InputDecoration(labelText: 'Description'),
                       controller: cubit.description,
@@ -67,6 +74,7 @@ class _AddScreenState extends State<AddScreen> {
 
                     // حقل نوع الخدمة الفرعية
                     TextFormField(
+                      enabled: widget.data == null,
                       decoration:
                           const InputDecoration(labelText: 'Subservice *'),
                       controller: cubit.subservice,
@@ -77,14 +85,18 @@ class _AddScreenState extends State<AddScreen> {
                     const SizedBox(height: 10),
                     if (cubit.selectedType == 'text')
                       TextField(
+                        enabled: widget.data == null,
                         decoration:
                             const InputDecoration(labelText: 'Content Value *'),
                         controller: cubit.valueText,
+                        maxLines: null,
                       ),
                     const SizedBox(height: 10),
                     GestureDetector(
                       onTap: () {
-                        cubit.changeIsMost();
+                        if (widget.data == null) {
+                          cubit.changeIsMost();
+                        }
                       },
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -112,37 +124,44 @@ class _AddScreenState extends State<AddScreen> {
                       },
                     ),
                     const SizedBox(height: 10),
-                    _buildDropdownField(
-                      value: cubit.selectedType ?? 'choose value type *',
-                      items: ['text', 'image', 'video'],
-                      onChanged: (newValue) {
-                        setState(() {
-                          cubit.selectedType = newValue;
-                        });
-                      },
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 50, vertical: 20),
-                      child: ElevatedButton(
-                        // style: ButtonStyle(
-                        //     overlayColor: WidgetStatePropertyAll(secondaryColor),
-                        //     backgroundColor:
-                        //         WidgetStatePropertyAll(secondaryColor)),
-                        onPressed: () {
-                          cubit.addDataContent(context);
+                    if (widget.data == null)
+                      _buildDropdownField(
+                        value: cubit.selectedType ?? 'choose value type *',
+                        items: ['text', 'image', 'video'],
+                        onChanged: (newValue) {
+                          setState(() {
+                            cubit.selectedType = newValue;
+                          });
                         },
-                        child: const Text(
-                          'Add Index',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                      ),
+                    if (widget.data == null)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 50, vertical: 20),
+                        child: ElevatedButton(
+                          // style: ButtonStyle(
+                          //     overlayColor: WidgetStatePropertyAll(secondaryColor),
+                          //     backgroundColor:
+                          //         WidgetStatePropertyAll(secondaryColor)),
+                          onPressed: () {
+                            cubit.addDataContent(context);
+                          },
+                          child: const Text(
+                            'Add Index',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
-                    ),
                     const SizedBox(height: 20),
                     Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      runAlignment: WrapAlignment.spaceEvenly,
+                      alignment: WrapAlignment.spaceEvenly,
+                      spacing: 30,
+                      runSpacing: 30,
                       children: cubit.contentData
                           .map(
                             (e) => InkWell(
@@ -150,13 +169,15 @@ class _AddScreenState extends State<AddScreen> {
                                 cubit.removeContentIndex(e);
                               },
                               child: Container(
-                                width: constraints.maxWidth / 4,
-                                height: constraints.maxWidth / 4,
-                                padding: const EdgeInsets.all(10.0),
+                                width: (constraints.maxWidth / 3) - 40,
+                                padding: e['type'].toString() == "text"
+                                    ? const EdgeInsets.all(10.0)
+                                    : null,
+                                clipBehavior: Clip.antiAliasWithSaveLayer,
                                 alignment: Alignment.center,
                                 decoration: BoxDecoration(
                                     border: Border.all(),
-                                    borderRadius: BorderRadius.circular(25)),
+                                    borderRadius: BorderRadius.circular(10)),
                                 child: e['type'].toString() == "text"
                                     ? Expanded(
                                         child: Text(
@@ -165,20 +186,60 @@ class _AddScreenState extends State<AddScreen> {
                                         textAlign: TextAlign.center,
                                         overflow: TextOverflow.ellipsis,
                                       ))
-                                    : Image.network(e['value'].toString()),
+                                    : AspectRatio(
+                                        aspectRatio: 16 / 9,
+                                        child: Image.network(
+                                          e['value'].toString(),
+                                          fit: BoxFit
+                                              .contain, // Maintain proportions within the AspectRatio
+                                        ),
+                                      ),
                               ),
                             ),
                           )
                           .toList(),
                     ),
                     const SizedBox(height: 100),
-
+                    Divider(),
+                    Align(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            cubit.selectedCover != null
+                                ? "Cover Image Selected, you can pick again to change it"
+                                : "Please choose cover image",
+                            style: TextStyle(fontSize: 20, color: Colors.white),
+                          ),
+                          if (cubit.selectedCover != null)
+                            const SizedBox(height: 10),
+                          if (cubit.selectedCover != null)
+                            Image.network(cubit.selectedCover!)
+                        ],
+                      ),
+                    ),
+                    Divider(),
+                    if (widget.data == null)
+                      ElevatedButton(
+                        onPressed: () {
+                          cubit.chooseCover(context);
+                        }, // استدعاء وظيفة اختيار الصورة
+                        child: const Text(
+                          'Pick Cover Image *',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 10),
                     ElevatedButton(
                       onPressed: () {
-                        cubit.chooseCover(context);
+                        cubit.chooseDate(context);
                       }, // استدعاء وظيفة اختيار الصورة
-                      child: const Text(
-                        'Pick Cover Image *',
+                      child: Text(
+                        '${cubit.dateTime ?? "DateTime"}',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -187,29 +248,29 @@ class _AddScreenState extends State<AddScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // زر الإرسال
-                    ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          _formKey.currentState!.save();
+                    if (widget.data == null)
+                      ElevatedButton(
+                        onPressed: () {
+                          if (_formKey.currentState!.validate()) {
+                            _formKey.currentState!.save();
 
-                          // طباعة البيانات للتأكد
+                            // طباعة البيانات للتأكد
 
-                          // استدعاء الكيوبت لإضافة البيانات
-                          PortofolioCubit.get(context)
-                              .addItem(context: context);
-                        } else {
-                          print("empty");
-                        }
-                      },
-                      child: const Text(
-                        'Submit',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                            // استدعاء الكيوبت لإضافة البيانات
+                            PortofolioCubit.get(context)
+                                .addItem(context: context);
+                          } else {
+                            print("empty");
+                          }
+                        },
+                        child: const Text(
+                          'Submit',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    ),
                   ],
                 ),
               ),

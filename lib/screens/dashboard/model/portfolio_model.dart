@@ -7,7 +7,8 @@ class PortfolioModel {
   final bool status;
   List<String> subservice = [];
 
-  PortfolioModel({required this.data, required this.message, required this.status});
+  PortfolioModel(
+      {required this.data, required this.message, required this.status});
 
   // إضافة قيمة إلى subservice إذا كانت غير موجودة
   void ezzat(String? value) {
@@ -40,7 +41,7 @@ class PortfolioModel {
 }
 
 class Data {
-  final String ?cover;
+  final String? cover;
   final List<Content>? content;
   final String? description;
   final int? id;
@@ -48,9 +49,11 @@ class Data {
   final String? subservice;
   final String? title;
   final String? type;
+  final String dateTime;
 
   Data({
     required this.cover,
+    required this.dateTime,
     required this.content,
     required this.description,
     required this.id,
@@ -61,15 +64,18 @@ class Data {
   });
 
   factory Data.fromJson(Map<String, dynamic> json) {
-    log(json['cover'].toString().replaceFirst('http://', 'https://'), name: "Cover URL");
+    log(json['cover'].toString().replaceFirst('http://', 'https://'),
+        name: "Cover URL");
 
     // تأكد من أن محتوى الـ data يتم تحليله بشكل صحيح إذا كان هو JSON
     List<Content> contentList = [];
     try {
       if (json['data'] is String) {
-        contentList = List<Content>.from(jsonDecode(json['data']).map((item) => Content.fromJson(item)));
+        contentList = List<Content>.from(
+            jsonDecode(json['data']).map((item) => Content.fromJson(item)));
       } else if (json['data'] is List) {
-        contentList = List<Content>.from(json['data'].map((item) => Content.fromJson(item)));
+        contentList = List<Content>.from(
+            json['data'].map((item) => Content.fromJson(item)));
       }
     } catch (e) {
       log('Error parsing content data: $e', name: "Content Error");
@@ -78,6 +84,7 @@ class Data {
     return Data(
       cover: json['cover'].toString().replaceFirst('http://', 'https://'),
       content: contentList.isNotEmpty ? contentList : null,
+      dateTime: "date_time",
       description: json['description'],
       id: json['id'],
       isMost: json['isMost'],
@@ -95,11 +102,18 @@ class Content {
   Content({required this.type, required this.value});
 
   factory Content.fromJson(Map<String, dynamic> json) {
-    log(json['value'].toString().replaceFirst('http://', 'https://'), name: "Content URL");
+    log(json['value'].toString().replaceFirst('http://', 'https://'),
+        name: "Content URL");
 
     return Content(
       type: json['type'],
       value: json['value'].toString().replaceFirst('http://', 'https://'),
     );
+  }
+  Map<String, String> toJson() {
+    return {
+      'type': type,
+      'value': value,
+    };
   }
 }

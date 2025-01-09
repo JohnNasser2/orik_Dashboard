@@ -23,6 +23,19 @@ class PortofolioCubit extends Cubit<PortofolioState> {
   String? selectedType;
   String? selectedCover;
   bool isMost = false;
+  String? dateTime;
+  init(Data data) {
+    title.text = data.title ?? "";
+    description.text = data.description ?? "";
+    subservice.text = data.subservice ?? "";
+    type = data.type;
+    selectedCover = data.cover;
+    isMost = data.isMost == 1;
+    contentData.addAll(data.content!
+        .map((e) => Content(type: e.type, value: e.value).toJson()));
+    emit(InitItemDetailsState());
+  }
+
   Future<FilePickerResult?> pickMedia(BuildContext context,
       {bool isImage = true}) async {
     try {
@@ -55,7 +68,7 @@ class PortofolioCubit extends Cubit<PortofolioState> {
         if (kIsWeb) {
           // For web, use the `bytes` property
           formData = FormData.fromMap({
-            "folder_name": "portfoio_" + selectedType!,
+            "folder_name": "portfolio_" + selectedType!,
             "file": MultipartFile.fromBytes(
               result.files.single.bytes!,
               filename: result.files.single.name,
@@ -84,6 +97,7 @@ class PortofolioCubit extends Cubit<PortofolioState> {
         var response = await dio.post("https://orikvision.com/backend/upload",
             data: formData);
         // selectedCover = response.data['file_url'].toString();
+        print(response.data);
 
         return response.data['file_url'].toString();
       } catch (e) {
@@ -102,7 +116,7 @@ class PortofolioCubit extends Cubit<PortofolioState> {
     try {
       var queryParameters = {
         "table_name": 'portfolios',
-        "type": '',
+        // "type": '',
       };
       final Response response = await DioHelper.getData(
         url: 'https://orikvision.com/backend/get_data',
@@ -151,10 +165,22 @@ class PortofolioCubit extends Cubit<PortofolioState> {
     emit(RemoveContentIndexState());
   }
 
+  chooseDate(context) async {
+    final DateTime? date = await showDatePicker(
+        context: context, firstDate: DateTime.now(), lastDate: DateTime(2030));
+    if (date != null) {
+      dateTime =
+          "${date.toUtc().year.toString().padLeft(4, '0')}-${date.toUtc().month.toString().padLeft(2, '0')}-${date.toUtc().day.toString().padLeft(2, '0')}";
+      ;
+      emit(ChooseCoverState());
+    }
+  }
+
   Future<void> addItem({required BuildContext context}) async {
     emit(PortofolioLoading());
     if (this.selectedCover == null ||
         subservice.text.isEmpty ||
+        dateTime == null ||
         type == null ||
         contentData.isEmpty) {
       return;
@@ -181,19 +207,22 @@ class PortofolioCubit extends Cubit<PortofolioState> {
           "isMost": isMost,
           "cover": selectedCover,
           "data": contentData,
+          "date_time": dateTime,
           "table_name": "portfolios",
         },
       );
 
       if (response.statusCode == 200 && response.data['status']) {
         // log('Item added successfully: ${newData.toString()}');
-        emit(PortofolioLoaded());
         title.text = '';
         description.text = '';
         subservice.text = '';
+        dateTime = null;
         type = null;
-        selectedCover = null;
+        this.selectedCover = null;
         contentData.clear();
+        contentData = [];
+        emit(PortofolioLoaded());
       } else {
         emit(PortofolioError(response.data['message'] ?? 'Error adding item'));
       }
