@@ -236,7 +236,9 @@ class _AddScreenState extends State<AddScreen> {
                     const SizedBox(height: 10),
                     ElevatedButton(
                       onPressed: () {
-                        cubit.chooseDate(context);
+                        if (widget.data == null) {
+                          cubit.chooseDate(context);
+                        }
                       }, // استدعاء وظيفة اختيار الصورة
                       child: Text(
                         '${cubit.dateTime ?? "DateTime"}',

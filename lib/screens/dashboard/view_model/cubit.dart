@@ -30,6 +30,7 @@ class PortofolioCubit extends Cubit<PortofolioState> {
     subservice.text = data.subservice ?? "";
     type = data.type;
     selectedCover = data.cover;
+    dateTime = data.dateTime;
     isMost = data.isMost == 1;
     contentData.addAll(data.content!
         .map((e) => Content(type: e.type, value: e.value).toJson()));
@@ -170,7 +171,7 @@ class PortofolioCubit extends Cubit<PortofolioState> {
         context: context, firstDate: DateTime.now(), lastDate: DateTime(2030));
     if (date != null) {
       dateTime =
-          "${date.toUtc().year.toString().padLeft(4, '0')}-${date.toUtc().month.toString().padLeft(2, '0')}-${date.toUtc().day.toString().padLeft(2, '0')}";
+          "${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
       ;
       emit(ChooseCoverState());
     }

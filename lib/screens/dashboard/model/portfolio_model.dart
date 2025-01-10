@@ -49,7 +49,7 @@ class Data {
   final String? subservice;
   final String? title;
   final String? type;
-  final String dateTime;
+  final String? dateTime;
 
   Data({
     required this.cover,
@@ -84,7 +84,7 @@ class Data {
     return Data(
       cover: json['cover'].toString().replaceFirst('http://', 'https://'),
       content: contentList.isNotEmpty ? contentList : null,
-      dateTime: "date_time",
+      dateTime: json['date_time'],
       description: json['description'],
       id: json['id'],
       isMost: json['isMost'],
